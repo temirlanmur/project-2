@@ -80,7 +80,11 @@ def categories(request):
 
 
 def listing(request, id):
-    pass
+    listing = Listing.objects.get(pk=id)
+    # title, description, current price, and photo
+    return render(request, "auctions/listing.html", {
+        "listing": listing
+    })
 
 
 def create_listing(request):
