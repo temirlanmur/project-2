@@ -3,5 +3,13 @@
 {% block body %}
     <h2>Active Listings</h2>
 
-    TODO
+    <ul>
+        {% for listing in active_listings %}
+            <li>
+                <a href="{{ listing.get_absolute_url }}">
+                    {{ listing.name }}
+                </a>
+            </li>
+        {% endfor %}
+    </ul>
 {% endblock %}
