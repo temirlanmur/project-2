@@ -7,7 +7,7 @@
         {% for listing in active_listings %}
             <li>
                 <a href="{{ listing.get_absolute_url }}">
-                    {{ listing.name }}
+                    {{ listing.title }}
                 </a>
             </li>
         {% endfor %}

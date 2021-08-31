@@ -1,11 +1,12 @@
 {% extends "auctions/layout.html" %}
 
 {% block body %}
-    <h2>{{ listing.name }}</h2>
+    <h2>{{ listing.title }}</h2>
     <ul>
-        <li>Author: {{ listing.author.first_name }}</li>
+        <li>Description: {{ listing.description }}</li>
         <li>Category: {{ listing.category }}</li>
-        <li>Current Price (starting bid): {{ listing.starting_bid }}</li>
         <li>Image: {{ listing.image }}</li>
+        <li>Current Price (starting bid): {{ listing.starting_bid }}</li>
+        <li>Author: {{ listing.author.first_name }}</li>
     </ul>
 {% endblock %}
