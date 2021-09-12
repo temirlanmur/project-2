@@ -1,0 +1,41 @@
+{% extends "auctions/layout.html" %}
+
+
+{% block body %}
+    <div class="container">
+        <h2 class="mb-3">Create New Listing</h2>        
+
+        <form action="{% url 'create_listing' %}" method="post">
+            {% csrf_token %}
+            <div class="mb-3">                
+                <label for="{{ form.title.id_for_label }}" class="form-label">Listing Title</label>                
+                {{ form.title }}
+                {{ form.title.errors }}
+            </div>
+            <div class="mb-3">                
+                <label for="{{ form.description.id_for_label }}" class="form-label">Description</label>
+                {{ form.description }}
+                {{ form.description.errors }}
+            </div>
+            <div class="mb-3">                
+                <label for="{{ form.category.id_for_label }}" class="form-label">Category</label>
+                {{ form.category }}
+                {{ form.category.errors }}
+            </div>
+            <div class="mb-3 fst-italic">
+                Can't find suitable category? Create your listing without a category, and then add an appropriate one 
+            </div>
+            <div class="mb-3">                
+                <label for="{{ form.starting_bid.id_for_label }}" class="form-label">Starting Price</label>
+                {{ form.starting_bid }}
+                {{ form.starting_bid.errors }}
+            </div>
+            <div class="mb-3">                
+                <label for="{{ form.image.id_for_label }}" class="form-label">Image</label>
+                {{ form.image }}
+                {{ form.image.errors }}
+            </div>
+            <input class="btn btn-primary" type="submit" value="Create Listing">
+        </form>
+    </div>    
+{% endblock %}

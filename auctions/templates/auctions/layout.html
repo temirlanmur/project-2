@@ -3,38 +3,75 @@
 <!DOCTYPE html>
 <html lang="en">
     <head>
-        <title>{% block title %}Auctions{% endblock %}</title>
-        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+        <title>{% block title %}Auctions{% endblock %}</title>        
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-KyZXEAg3QhqLMpG8r+8fhAXLRk2vvoC2f3B09zVXn8CA5QIVfZOJ3BCsw2P0p/We" crossorigin="anonymous">
         <link href="{% static 'auctions/styles.css' %}" rel="stylesheet">
     </head>
     <body>
-        <h1>Auctions</h1>
-        <div>
-            {% if user.is_authenticated %}
-                Signed in as <strong>{{ user.username }}</strong>.
-            {% else %}
-                Not signed in.
-            {% endif %}
-        </div>
-        <ul class="nav">
-            <li class="nav-item">
-                <a class="nav-link" href="{% url 'index' %}">Active Listings</a>
-            </li>
-            {% if user.is_authenticated %}
-                <li class="nav-item">
-                    <a class="nav-link" href="{% url 'logout' %}">Log Out</a>
-                </li>
-            {% else %}
-                <li class="nav-item">
-                    <a class="nav-link" href="{% url 'login' %}">Log In</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{% url 'register' %}">Register</a>
-                </li>
-            {% endif %}
-        </ul>
+        <header>
+            <div class="container">
+
+                <ul class="nav align-items-center justify-content-between">
+                    <li class="nav-item me-auto">
+                        <h1>Auctions</h1>
+                    </li>                    
+                    {% if user.is_authenticated %}
+                    <li class="nav-item">
+                        Signed in as
+                        <a class="link-secondary" href="{% url 'user_page' user.username %}">{{ user.username }}</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'logout' %}">Log Out</a>
+                    </li>
+                    {% else %}
+                    <li class="nav-item px-3 py-2">
+                        Not signed in
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'login' %}">Log In</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'register' %}">Register</a>
+                    </li>
+                    {% endif %}
+                </ul>
+                                
+                <ul class="nav">
+                    <li class="nav-item">
+                        <a class="nav-link ps-0" href="{% url 'index' %}">Active Listings</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'categories' %}">Categories</a>
+                    </li>                        
+                    <li class="nav-item">
+                        <a
+                            {% if user.is_authenticated %}
+                                class="nav-link" href="{% url 'create_listing' %}"
+                            {% else %}
+                                class="nav-link disabled" href="#"
+                            {% endif %}>
+                            Create Listing
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a
+                            {% if user.is_authenticated %}
+                                class="nav-link" href="{% url 'watchlist' %}"
+                            {% else %}
+                                class="nav-link disabled" href="#"
+                            {% endif %}>
+                            My Watchlist
+                        </a>
+                    </li>                        
+                </ul>
+            </div>            
+        </header>
+        
         <hr>
-        {% block body %}
-        {% endblock %}
+
+        <main>        
+            {% block body %}
+            {% endblock %}        
+        </main>
     </body>
 </html>

@@ -1,0 +1,35 @@
+{% for row in construct_list %}
+    <div class="row">
+        {% for item in row %}
+            <div class="col-md">
+                {% if item %}
+                    <div class="card">
+                        {% if item.image %}
+                            <a href="{{ item.get_absolute_url }}">
+                                <img src="{{ item.image }}" class="card-img-top" alt="listing image">
+                            </a>
+                        {% endif %}
+                        <div class="card-body">
+                            <h5 class="card-title">{{ item.title }}</h5>
+                            <p class="card-text">{{ item.description|truncatewords:9 }}</p>
+                        </div>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item fw-bold">
+                                Price: ${{ item.calculate_current_price }}
+                                {% if not item.active %}
+                                    <span class="text-danger">SOLD</span>
+                                {% endif %}
+                            </li>
+                            <li class="list-group-item">Created: {{ item.date_added }}</li>                                    
+                            </ul>
+                        <div class="card-body">
+                            <a href="{{ item.get_absolute_url }}"
+                                class="btn btn-primary">View Details
+                            </a>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>            
+        {% endfor %}
+    </div>               
+{% endfor %}

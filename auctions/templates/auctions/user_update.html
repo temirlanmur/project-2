@@ -1,0 +1,28 @@
+{% extends "auctions/layout.html" %}
+
+
+{% block body %}
+    <div class="container">
+        <h2 class="mb-3">User</h2>
+    
+        <form action="{{ user_detail.get_update_url }}" method="post">
+            {% csrf_token %}
+            <div class="mb-3">                
+                <label for="{{ form.first_name.id_for_label }}" class="form-label">Listing Title</label>                
+                {{ form.first_name }}
+                {{ form.first_name.errors }}
+            </div>
+            <div class="mb-3">                
+                <label for="{{ form.last_name.id_for_label }}" class="form-label">Listing Title</label>                
+                {{ form.last_name }}
+                {{ form.last_name.errors }}
+            </div>
+            <div class="mb-3">                
+                <label for="{{ form.avatar.id_for_label }}" class="form-label">Listing Title</label>                
+                {{ form.avatar }}
+                {{ form.avatar.errors }}
+            </div>
+            <input class="btn btn-primary" type="submit" value="Update Info">
+        </form>
+    </div>
+{% endblock %}
