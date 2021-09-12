@@ -1,17 +1,25 @@
 from django.contrib.auth import authenticate, login, logout
 from django.db import IntegrityError
 from django.http import HttpResponse, HttpResponseRedirect
-from django.shortcuts import render
+from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
+from django.views.generic import View
+from django.core.exceptions import PermissionDenied
 
-from .models import User, ListingCategory, Listing, Bid, Comment
+from .models import User, ListingCategory, Listing
+from .forms import UserForm, ListingCategoryForm, ListingForm, CommentForm, BidForm
+from .utils import ConstructListMixin
 
 
-def index(request):
-    active_listings = Listing.objects.filter(active=True)
-    return render(request, "auctions/index.html", {
-        "active_listings": active_listings
-    })
+class Index(ConstructListMixin, View):
+    model = Listing
+    template_name = "auctions/index.html"
+
+    def get(self, request):
+        active_listings = self.model.objects.filter(active=True)
+        return render(request, self.template_name, {
+            "construct_list": self.construct_list(active_listings)
+        })
 
 
 def login_view(request):
@@ -67,29 +75,251 @@ def register(request):
 
 
 # Custom views
-def user(request):
-    pass
+class UserDetail(View):
+    model = User
+    template_name = "auctions/user.html"
+
+    def get(self, request, username):
+        user = get_object_or_404(self.model, username=username)
+        isauthor_flag = (request.user == user)
+        return render(request, self.template_name, {
+            "user_detail": user,
+            "isauthor_flag": isauthor_flag
+        })
+    
+
+class UserUpdate(View):
+    model = User
+    form_class = UserForm
+    template_name = "auctions/user_update.html"
+
+    def get(self, request, username):
+        user = get_object_or_404(self.model, username=username)
+        if request.user == user:
+            return render(request, self.template_name, {
+                "user_detail": user,
+                "form": self.form_class(instance=user)
+            })
+        raise PermissionDenied
+        
+
+    def post(self, request, username):
+        user = get_object_or_404(self.model, username=username)
+        if request.user == user:
+            update_form = self.form_class(request.POST, instance=user)
+            if update_form.is_valid():
+                updated_user = update_form.save()
+                return redirect(updated_user)
+            else:
+                return render(request, self.template_name, {
+                    "user_detail": user,
+                    "form": update_form
+                })
+        raise PermissionDenied
 
 
-def category(request):
-    pass
+class CategoryList(View):
+    model = ListingCategory
+    template_name = "auctions/category_list.html"
+
+    def get(self, request):
+        return render(request, self.template_name, {
+            "category_list": self.model.objects.all()
+        })
 
 
-def categories(request):
-    pass
+class CategoryDetail(ConstructListMixin, View):
+    model = ListingCategory
+    template_name = "auctions/category_detail.html"
+
+    def get(self, request, slug):
+        category = get_object_or_404(self.model, slug=slug)
+
+        return render(request, self.template_name, {
+            "category": category,
+            "construct_list": self.construct_list(category.listings.all())
+        })
 
 
-def listing(request, id):
-    listing = Listing.objects.get(pk=id)
-    # title, description, current price, and photo
-    return render(request, "auctions/listing.html", {
-        "listing": listing
-    })
+class CategoryCreate(View):
+    form_class = ListingCategoryForm
+    template_name = "auctions/category_create.html"
+
+    def get(self, request):
+        if request.user.is_authenticated:
+            return render(request, self.template_name, {
+                "form": self.form_class()
+            })
+        return HttpResponse('Unauthorized', status=401)
+
+    def post(self,request):
+        if request.user.is_authenticated:
+            bound_form = self.form_class(request.POST)        
+            if bound_form.is_valid():
+                new_category = bound_form.save()
+                return redirect(new_category)        
+            else:
+                return render(request, self.template_name, {
+                    "form": bound_form
+                })
+        return HttpResponse('Unauthorized', status=401)
 
 
-def create_listing(request):
-    pass
+class ListingDetail(View):
+    model = Listing              
+    template_name = "auctions/listing_detail.html"
+
+    def get(self, request, id):
+        listing = get_object_or_404(self.model, pk=id)        
+        isauthor_flag = (request.user == listing.author)
+        inwatchlist_flag = listing.watchlisted_by.filter(username=request.user)
+        return render(request, self.template_name, {
+            "listing": listing,
+            "isauthor_flag": isauthor_flag,
+            "inwatchlist_flag": inwatchlist_flag,
+            "bid_form": BidForm(),
+            "comment_form": CommentForm()            
+        })
+    
+    def post(self, request, id):
+        listing = get_object_or_404(self.model, pk=id)
+        isauthor_flag = (request.user == listing.author)
+        inwatchlist_flag = listing.watchlisted_by.filter(username=request.user)
+        bidlow_flag = False
+        bid_form = BidForm()
+        comment_form = CommentForm()
+        # Process watchlist
+        if "addtowatchlist" in request.POST:            
+            if inwatchlist_flag:
+                listing.watchlisted_by.remove(request.user)
+                inwatchlist_flag = False                   
+            else:
+                listing.watchlisted_by.add(request.user)
+                inwatchlist_flag = True
+        # Process bid
+        if "makebid" in request.POST:
+            bid_form = BidForm(request.POST)                
+            if bid_form.is_valid():
+                user_bid = bid_form.cleaned_data["amount"]
+                if (user_bid > listing.calculate_max_bid()) and (user_bid >= listing.starting_bid):
+                    new_bid = bid_form.save(commit=False)
+                    new_bid.from_user = request.user
+                    new_bid.on_listing = listing
+                    new_bid.save()
+                    bid_form = BidForm()
+                    listing.user_with_max_bid = request.user
+                    listing.save()
+                else:
+                    bidlow_flag = True                    
+        # Process comment
+        if "addcomment" in request.POST:            
+            comment_form = CommentForm(request.POST)   
+            if comment_form.is_valid():
+                new_comment = comment_form.save(commit=False)
+                new_comment.author = request.user
+                new_comment.on_listing = listing
+                new_comment.save()
+                comment_form = CommentForm()        
+        return render(request, self.template_name, {
+            "listing": listing,
+            "isauthor_flag": isauthor_flag,
+            "inwatchlist_flag": inwatchlist_flag,
+            "bidlow_flag": bidlow_flag,
+            "bid_form": bid_form,
+            "comment_form": comment_form
+        })
 
 
-def watchlist(request):
-    pass
+class ListingUpdate(View):
+    model = Listing    
+    form_class = ListingForm
+    template_name = "auctions/listing_update.html"
+
+    def get(self, request, id):
+        listing = get_object_or_404(self.model, pk=id)
+        form = self.form_class(instance=listing)
+        form.disable_starting_bid()
+        if listing.author == request.user:
+            return render(request, self.template_name, {
+                "listing": listing,
+                "form": form
+            })
+        raise PermissionDenied
+    
+
+    def post(self, request, id):
+        listing = get_object_or_404(Listing, pk=id)
+        if listing.author == request.user:
+            data = request.POST.dict()
+            data["starting_bid"] = listing.starting_bid
+            update_form = self.form_class(data, instance=listing)
+            if update_form.is_valid():                
+                updated_listing = update_form.save()
+                return redirect(updated_listing)
+            else:
+                return render(request, self.template_name, {
+                    "listing": listing,
+                    "form": update_form
+                })
+        raise PermissionDenied        
+
+
+class ListingCreate(View):  
+    model = Listing
+    form_class = ListingForm  
+    template_name = "auctions/listing_create.html"
+    
+    def get(self, request):
+        if request.user.is_authenticated:
+            return render(request, self.template_name, {
+                "form": self.form_class()
+            })
+        return HttpResponse('Unauthorized', status=401)
+    
+    def post(self, request):
+        bound_form = self.form_class(request.POST)
+        if request.user.is_authenticated:
+            if bound_form.is_valid():
+                new_listing = bound_form.save(commit=False)
+                new_listing.author=request.user
+                new_listing.save()
+                return redirect(new_listing)
+            else:
+                return render(request, self.template_name, {
+                    "form": bound_form
+                })
+        return HttpResponse('Unauthorized', status=401)
+
+
+class ListingClose(View):
+    model = Listing
+    template_name = "auctions/listing_close.html"
+
+    def get(self, request, id):
+        listing = get_object_or_404(self.model, pk=id)
+        if listing.author == request.user:
+            winner = listing.user_with_max_bid
+            return render(request, self.template_name, {
+                "listing": listing,
+                "winner": winner,
+            })
+        raise PermissionDenied
+
+    def post(self, request, id):
+        listing = get_object_or_404(Listing, pk=id)
+        listing.active = False
+        listing.save()
+        return redirect("index")
+
+
+class WatchlistDetail(ConstructListMixin, View):
+    model = User
+    template_name = "auctions/watchlist.html"
+    
+    def get(self, request):
+        if request.user.is_authenticated:
+            watchlist = request.user.watchlist_listings.all()
+            return render(request, self.template_name, {
+                "construct_list": self.construct_list(watchlist)
+            })
+        return HttpResponse('Unauthorized', status=401)
