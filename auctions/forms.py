@@ -17,23 +17,24 @@ class UserForm(forms.ModelForm):
         widgets = {
             "first_name": forms.TextInput(attrs={
                 "class": "form-control",
-                "placeholder": ""                
+                "placeholder": "Enter your first name"                
             }),
             "last_name": forms.TextInput(attrs={
                 "class": "form-control",
-                "placeholder": ""                
+                "placeholder": "Enter your last name"                
             }),
             "avatar": forms.TextInput(attrs={
                 "class": "form-control",
-                "placeholder": ""                
+                "placeholder": "Paste the link for your avatar image"                
             })
         }
 
 
 class ListingCategoryForm(forms.ModelForm):
     
-    def clean(self):
-        slug = slugify(super(ListingCategoryForm, self).clean().get('name'))        
+    def clean_slug(self):
+        slug = slugify(super(ListingCategoryForm, self).clean().get("name"))
+        print(slug)        
         if ListingCategory.objects.filter(slug=slug).exists():
             raise ValidationError("Such category already exists")
         if slug == "create":
