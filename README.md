@@ -1,4 +1,4 @@
-# This is the implementation of the third 'Commerce' project from CS50's Web Programming cource
+# This is the implementation of the third 'Commerce' project from CS50's Web Programming course
 
 You may find project's specification along with initial code [here](https://cs50.harvard.edu/web/2020/projects/2/commerce/ "CS50's site").
 
