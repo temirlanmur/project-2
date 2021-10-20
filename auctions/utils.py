@@ -1,23 +1,23 @@
-class ConstructListMixin:
+class CustomPageRangeMixin:
+    pages_on_each_side = 1  # The number of pages on each side of the current page number
 
-    def construct_list(self, object_list, COLUMNS=4):
-
-        TOTAL_ITEMS = len(object_list)
-        ROWS = TOTAL_ITEMS // COLUMNS
-        ROWS = ROWS + 1 if (TOTAL_ITEMS % COLUMNS) else ROWS
-
-        result_list = []
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
         
-        for _ in range(ROWS):
-            new_row = [None for i in range(COLUMNS)]
-            result_list.append(new_row)
+        if self.pages_on_each_side == None or self.pages_on_each_side == 0:
+            return context
+            
+        # Add custom page range to the context. (For pagination)
+        page_number = context['page_obj'].number
+        num_pages = context['paginator'].num_pages
 
-        i = 0
-        for row_count in range(ROWS):            
-            for item_count in range(COLUMNS):
-                result_list[row_count][item_count] = object_list[i]
-                i += 1
-                if (i == TOTAL_ITEMS):
-                    break
+        left_index = int(page_number) - self.pages_on_each_side
+        if left_index < 1:
+            left_index = 1
+        right_index = int(page_number) + self.pages_on_each_side
+        if right_index > num_pages:
+            right_index = num_pages
+        custom_range = range(left_index, right_index + 1)  # Because python range(1, 4) is from 1 till 3
         
-        return result_list
+        context['custom_page_range'] = custom_range
+        return context

@@ -9,38 +9,18 @@ from django.core.exceptions import PermissionDenied
 
 from .models import User, ListingCategory, Listing
 from .forms import UserForm, ListingCategoryForm, ListingForm, CommentForm, BidForm
-from .utils import ConstructListMixin
+from .utils import CustomPageRangeMixin
 
 
-class ListingList(ListView):
+class ListingList(CustomPageRangeMixin, ListView):
     context_object_name = "listings"
-    paginate_by = 6    
+    paginate_by = 1    
     template_name = "auctions/index.html"
-
-    pages_on_each_side = 1  # The number of pages on each side of the current page number
 
     def get_queryset(self):
         active_listings = Listing.objects.filter(active=True)
         return active_listings
     
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        
-        # Add custom page range to the context. (For pagination)
-        page_number = context['page_obj'].number
-        num_pages = context['paginator'].num_pages
-
-        left_index = int(page_number) - self.pages_on_each_side
-        if left_index < 1:
-            left_index = 1
-        right_index = int(page_number) + self.pages_on_each_side
-        if right_index > num_pages:
-            right_index = num_pages
-        custom_range = range(left_index, right_index + 1)  # Because python range(1, 4) is from 1 till 3
-        
-        context['custom_page_range'] = custom_range
-        return context
-
 
 def login_view(request):
     if request.method == "POST":
@@ -144,35 +124,15 @@ class CategoryList(ListView):
     template_name = "auctions/category_list.html"
 
 
-class CategoryDetail(ListView):
+class CategoryDetail(CustomPageRangeMixin, ListView):
     context_object_name = 'listings'
     paginate_by = 6
     template_name = "auctions/category_detail.html"
-
-    pages_on_each_side = 1  # The number of pages on each side of the current page number
     
     def get_queryset(self):
         category = get_object_or_404(ListingCategory, slug=self.kwargs['slug'])
         listings = category.listings.filter(active=True)
         return listings
-    
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        
-        # Add custom page range to the context. (For pagination)
-        page_number = context['page_obj'].number
-        num_pages = context['paginator'].num_pages
-
-        left_index = int(page_number) - self.pages_on_each_side
-        if left_index < 1:
-            left_index = 1
-        right_index = int(page_number) + self.pages_on_each_side
-        if right_index > num_pages:
-            right_index = num_pages
-        custom_range = range(left_index, right_index + 1)  # Because python range(1, 4) is from 1 till 3
-        
-        context['custom_page_range'] = custom_range
-        return context
 
 
 class ListingDetail(View):
@@ -307,32 +267,12 @@ class ListingClose(View):
         return redirect("index")
 
 
-class WatchlistDetail(LoginRequiredMixin, ListView):
+class WatchlistDetail(LoginRequiredMixin, CustomPageRangeMixin, ListView):
     context_object_name = "listings"
     login_url = "login"
     paginate_by = 6
     template_name = "auctions/watchlist.html"
 
-    pages_on_each_side = 1  # The number of pages on each side of the current page number
-    
     def get_queryset(self):
         listings = self.request.user.watchlist_listings.all()
         return listings
-    
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        
-        # Add custom page range to the context. (For pagination)
-        page_number = context['page_obj'].number
-        num_pages = context['paginator'].num_pages
-
-        left_index = int(page_number) - self.pages_on_each_side
-        if left_index < 1:
-            left_index = 1
-        right_index = int(page_number) + self.pages_on_each_side
-        if right_index > num_pages:
-            right_index = num_pages
-        custom_range = range(left_index, right_index + 1)  # Because python range(1, 4) is from 1 till 3
-        
-        context['custom_page_range'] = custom_range
-        return context
