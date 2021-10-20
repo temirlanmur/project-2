@@ -1,9 +1,10 @@
 from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db import IntegrityError
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
-from django.views.generic import DetailView, ListView, View
+from django.views.generic import CreateView, DetailView, ListView, View
 from django.core.exceptions import PermissionDenied
 
 from .models import User, ListingCategory, Listing
@@ -273,31 +274,16 @@ class ListingUpdate(View):
         raise PermissionDenied        
 
 
-class ListingCreate(View):  
+class ListingCreate(LoginRequiredMixin, CreateView):  
+    form_class = ListingForm
+    login_url = "login"
     model = Listing
-    form_class = ListingForm  
     template_name = "auctions/listing_create.html"
     
-    def get(self, request):
-        if request.user.is_authenticated:
-            return render(request, self.template_name, {
-                "form": self.form_class()
-            })
-        return HttpResponse('Unauthorized', status=401)
-    
-    def post(self, request):
-        bound_form = self.form_class(request.POST)
-        if request.user.is_authenticated:
-            if bound_form.is_valid():
-                new_listing = bound_form.save(commit=False)
-                new_listing.author=request.user
-                new_listing.save()
-                return redirect(new_listing)
-            else:
-                return render(request, self.template_name, {
-                    "form": bound_form
-                })
-        return HttpResponse('Unauthorized', status=401)
+    def form_valid(self, form):
+        self.object = form.save(commit=False)
+        self.object.author = self.request.user
+        return super().form_valid(form)
 
 
 class ListingClose(View):
