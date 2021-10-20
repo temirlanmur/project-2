@@ -143,17 +143,35 @@ class CategoryList(ListView):
     template_name = "auctions/category_list.html"
 
 
-class CategoryDetail(ConstructListMixin, View):
-    model = ListingCategory
+class CategoryDetail(ListView):
+    context_object_name = 'listings'
+    paginate_by = 6
     template_name = "auctions/category_detail.html"
 
-    def get(self, request, slug):
-        category = get_object_or_404(self.model, slug=slug)
+    pages_on_each_side = 1  # The number of pages on each side of the current page number
+    
+    def get_queryset(self):
+        category = get_object_or_404(ListingCategory, slug=self.kwargs['slug'])
+        listings = category.listings.filter(active=True)
+        return listings
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        
+        # Add custom page range to the context. (For pagination)
+        page_number = context['page_obj'].number
+        num_pages = context['paginator'].num_pages
 
-        return render(request, self.template_name, {
-            "category": category,
-            "construct_list": self.construct_list(category.listings.all())
-        })
+        left_index = int(page_number) - self.pages_on_each_side
+        if left_index < 1:
+            left_index = 1
+        right_index = int(page_number) + self.pages_on_each_side
+        if right_index > num_pages:
+            right_index = num_pages
+        custom_range = range(left_index, right_index + 1)  # Because python range(1, 4) is from 1 till 3
+        
+        context['custom_page_range'] = custom_range
+        return context
 
 
 class CategoryCreate(View):
