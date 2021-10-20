@@ -174,30 +174,6 @@ class CategoryDetail(ListView):
         return context
 
 
-class CategoryCreate(View):
-    form_class = ListingCategoryForm
-    template_name = "auctions/category_create.html"
-
-    def get(self, request):
-        if request.user.is_authenticated:
-            return render(request, self.template_name, {
-                "form": self.form_class()
-            })
-        return HttpResponse('Unauthorized', status=401)
-
-    def post(self,request):
-        if request.user.is_authenticated:
-            bound_form = self.form_class(request.POST)        
-            if bound_form.is_valid():
-                new_category = bound_form.save()
-                return redirect(new_category)        
-            else:
-                return render(request, self.template_name, {
-                    "form": bound_form
-                })
-        return HttpResponse('Unauthorized', status=401)
-
-
 class ListingDetail(View):
     model = Listing              
     template_name = "auctions/listing_detail.html"
