@@ -3,7 +3,7 @@ from django.db import IntegrityError
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
-from django.views.generic import View, ListView
+from django.views.generic import DetailView, ListView, View
 from django.core.exceptions import PermissionDenied
 
 from .models import User, ListingCategory, Listing
@@ -137,14 +137,10 @@ class UserUpdate(View):
         raise PermissionDenied
 
 
-class CategoryList(View):
+class CategoryList(ListView):
+    context_object_name = 'categories'
     model = ListingCategory
     template_name = "auctions/category_list.html"
-
-    def get(self, request):
-        return render(request, self.template_name, {
-            "category_list": self.model.objects.all()
-        })
 
 
 class CategoryDetail(ConstructListMixin, View):
