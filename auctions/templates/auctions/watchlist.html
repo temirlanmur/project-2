@@ -5,6 +5,17 @@
     <div class="container">
         <h2 class="mb-3">My Watchlist</h2>
 
-        {% include "auctions/construct_list.html" %}
+        <div class="row g-4">
+            {% for listing in listings %}
+                <div class="col-sm-12 col-md-6 col-lg-4">                
+                    {% include 'auctions/listing_card.html' %}                
+                </div>                
+            {% empty %}
+                <p>No listings available</p>
+            {% endfor %}            
+        </div>
     </div>
+
+
+    {% include 'auctions/pagination.html' %}
 {% endblock %}

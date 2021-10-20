@@ -307,14 +307,32 @@ class ListingClose(View):
         return redirect("index")
 
 
-class WatchlistDetail(ConstructListMixin, View):
-    model = User
+class WatchlistDetail(LoginRequiredMixin, ListView):
+    context_object_name = "listings"
+    login_url = "login"
+    paginate_by = 6
     template_name = "auctions/watchlist.html"
+
+    pages_on_each_side = 1  # The number of pages on each side of the current page number
     
-    def get(self, request):
-        if request.user.is_authenticated:
-            watchlist = request.user.watchlist_listings.all()
-            return render(request, self.template_name, {
-                "construct_list": self.construct_list(watchlist)
-            })
-        return HttpResponse('Unauthorized', status=401)
+    def get_queryset(self):
+        listings = self.request.user.watchlist_listings.all()
+        return listings
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        
+        # Add custom page range to the context. (For pagination)
+        page_number = context['page_obj'].number
+        num_pages = context['paginator'].num_pages
+
+        left_index = int(page_number) - self.pages_on_each_side
+        if left_index < 1:
+            left_index = 1
+        right_index = int(page_number) + self.pages_on_each_side
+        if right_index > num_pages:
+            right_index = num_pages
+        custom_range = range(left_index, right_index + 1)  # Because python range(1, 4) is from 1 till 3
+        
+        context['custom_page_range'] = custom_range
+        return context
