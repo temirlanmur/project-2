@@ -14,7 +14,7 @@ from .utils import CustomPageRangeMixin
 
 class ListingList(CustomPageRangeMixin, ListView):
     context_object_name = "listings"
-    paginate_by = 1    
+    paginate_by = 6
     template_name = "auctions/index.html"
 
     def get_queryset(self):
