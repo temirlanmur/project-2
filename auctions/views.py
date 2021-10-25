@@ -88,34 +88,17 @@ class UserDetail(View):
         })
     
 
-class UserUpdate(View):
-    model = User
+class UserUpdate(LoginRequiredMixin, UpdateView):
+    context_object_name = "user_detail"
     form_class = UserForm
+    login_url = "login"
     template_name = "auctions/user_update.html"
 
-    def get(self, request, username):
-        user = get_object_or_404(self.model, username=username)
-        if request.user == user:
-            return render(request, self.template_name, {
-                "user_detail": user,
-                "form": self.form_class(instance=user)
-            })
-        raise PermissionDenied
-        
-
-    def post(self, request, username):
-        user = get_object_or_404(self.model, username=username)
-        if request.user == user:
-            update_form = self.form_class(request.POST, instance=user)
-            if update_form.is_valid():
-                updated_user = update_form.save()
-                return redirect(updated_user)
-            else:
-                return render(request, self.template_name, {
-                    "user_detail": user,
-                    "form": update_form
-                })
-        raise PermissionDenied
+    def get_object(self, queryset=None):
+        obj = get_object_or_404(User, username=self.kwargs["username"])
+        if obj != self.request.user:
+            raise PermissionDenied
+        return obj
 
 
 class CategoryList(ListView):
