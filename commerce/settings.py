@@ -71,6 +71,7 @@ TEMPLATES = [
 WSGI_APPLICATION = 'commerce.wsgi.application'
 
 
+DEFAULT_AUTO_FIELD='django.db.models.AutoField'
 # Database
 # https://docs.djangoproject.com/en/3.0/ref/settings/#databases
 
