@@ -75,17 +75,13 @@ def register(request):
 
 
 # Custom views
-class UserDetail(View):
-    model = User
+class UserDetail(DetailView):
+    context_object_name = "user_detail"
     template_name = "auctions/user.html"
 
-    def get(self, request, username):
-        user = get_object_or_404(self.model, username=username)
-        isauthor_flag = (request.user == user)
-        return render(request, self.template_name, {
-            "user_detail": user,
-            "isauthor_flag": isauthor_flag
-        })
+    def get_object(self, queryset=None):
+        obj = get_object_or_404(User, username=self.kwargs["username"])
+        return obj
     
 
 class UserUpdate(LoginRequiredMixin, UpdateView):

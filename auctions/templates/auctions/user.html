@@ -20,7 +20,7 @@
                 {{ user_detail.first_name }} {{ user_detail.last_name }}
             </li>
             <li class="list-group-item">
-                {% if isauthor_flag %}
+                {% if user == user_detail %}
                     <a class="link-primary" href="{{ user_detail.get_update_url }}">Edit info</a>
                 {% endif %}
             </li>            
