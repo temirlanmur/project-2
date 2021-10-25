@@ -18,14 +18,24 @@ Here are the functionalities of the site:
     - comment on listings
 * Once the listing is deactivated, it is not displayed on the index page anymore. The listing page displays that the item is sold to the user, who placed the highest bid
 
+
 ![Index page](https://github.com/temirlanmur/project-2/blob/main/README-images/index-page.png)
 *Index page*
+
+
+
 
 ![Listing page](https://github.com/temirlanmur/project-2/blob/main/README-images/listing-page.png)
 *Listing page*
 
+
+
+
 ![Create page](https://github.com/temirlanmur/project-2/blob/main/README-images/create-page.png)
 *Create page*
+
+
+
 
 ![Categories page](https://github.com/temirlanmur/project-2/blob/main/README-images/categories-page.png)
 *Categories page*
