@@ -135,31 +135,18 @@ class CategoryDetail(CustomPageRangeMixin, ListView):
         return listings
 
 
-class ListingDetail(View):
-    model = Listing              
-    template_name = "auctions/listing_detail.html"
-
-    def get(self, request, id):
-        listing = get_object_or_404(self.model, pk=id)        
-        isauthor_flag = (request.user == listing.author)
-        inwatchlist_flag = listing.watchlisted_by.filter(username=request.user)
-        return render(request, self.template_name, {
-            "listing": listing,
-            "isauthor_flag": isauthor_flag,
-            "inwatchlist_flag": inwatchlist_flag,
-            "bid_form": BidForm(),
-            "comment_form": CommentForm()            
-        })
+def listing_view(request, id):
+    listing = get_object_or_404(Listing, pk=id)     
+    isauthor_flag = (request.user == listing.author)
+    inwatchlist_flag = listing.watchlisted_by.filter(username=request.user).exists()
+    bidlow_flag = False
+    bid_form = BidForm()
+    comment_form = CommentForm()
     
-    def post(self, request, id):
-        listing = get_object_or_404(self.model, pk=id)
-        isauthor_flag = (request.user == listing.author)
-        inwatchlist_flag = listing.watchlisted_by.filter(username=request.user)
-        bidlow_flag = False
-        bid_form = BidForm()
-        comment_form = CommentForm()
+    if request.method == "POST":
+        post_data = request.POST
         # Process watchlist
-        if "addtowatchlist" in request.POST:            
+        if "addtowatchlist" in post_data:            
             if inwatchlist_flag:
                 listing.watchlisted_by.remove(request.user)
                 inwatchlist_flag = False                   
@@ -167,8 +154,8 @@ class ListingDetail(View):
                 listing.watchlisted_by.add(request.user)
                 inwatchlist_flag = True
         # Process bid
-        if "makebid" in request.POST:
-            bid_form = BidForm(request.POST)                
+        if "makebid" in post_data:
+            bid_form = BidForm(post_data)                
             if bid_form.is_valid():
                 user_bid = bid_form.cleaned_data["amount"]
                 if (user_bid > listing.calculate_max_bid()) and (user_bid >= listing.starting_bid):
@@ -182,22 +169,23 @@ class ListingDetail(View):
                 else:
                     bidlow_flag = True                    
         # Process comment
-        if "addcomment" in request.POST:            
-            comment_form = CommentForm(request.POST)   
+        if "addcomment" in post_data:            
+            comment_form = CommentForm(post_data)   
             if comment_form.is_valid():
                 new_comment = comment_form.save(commit=False)
                 new_comment.author = request.user
                 new_comment.on_listing = listing
                 new_comment.save()
-                comment_form = CommentForm()        
-        return render(request, self.template_name, {
-            "listing": listing,
-            "isauthor_flag": isauthor_flag,
-            "inwatchlist_flag": inwatchlist_flag,
-            "bidlow_flag": bidlow_flag,
-            "bid_form": bid_form,
-            "comment_form": comment_form
-        })
+                comment_form = CommentForm()
+
+    return render(request, "auctions/listing_detail.html", {
+        "listing": listing,
+        "isauthor_flag": isauthor_flag,
+        "inwatchlist_flag": inwatchlist_flag,
+        "bidlow_flag": bidlow_flag,
+        "bid_form": bid_form,
+        "comment_form": comment_form
+    })
 
 
 class ListingUpdate(View):
