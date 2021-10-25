@@ -4,11 +4,11 @@ from django.db import IntegrityError
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
-from django.views.generic import CreateView, DetailView, ListView, View
+from django.views.generic import CreateView, DetailView, ListView, UpdateView, View
 from django.core.exceptions import PermissionDenied
 
 from .models import User, ListingCategory, Listing
-from .forms import UserForm, ListingCategoryForm, ListingForm, CommentForm, BidForm
+from .forms import UserForm, ListingForm, CommentForm, BidForm
 from .utils import CustomPageRangeMixin
 
 
@@ -188,38 +188,16 @@ def listing_view(request, id):
     })
 
 
-class ListingUpdate(View):
-    model = Listing    
+class ListingUpdate(LoginRequiredMixin, UpdateView):
     form_class = ListingForm
+    login_url = "login"  
     template_name = "auctions/listing_update.html"
 
-    def get(self, request, id):
-        listing = get_object_or_404(self.model, pk=id)
-        form = self.form_class(instance=listing)
-        form.disable_starting_bid()
-        if listing.author == request.user:
-            return render(request, self.template_name, {
-                "listing": listing,
-                "form": form
-            })
-        raise PermissionDenied
-    
-
-    def post(self, request, id):
-        listing = get_object_or_404(Listing, pk=id)
-        if listing.author == request.user:
-            data = request.POST.dict()
-            data["starting_bid"] = listing.starting_bid
-            update_form = self.form_class(data, instance=listing)
-            if update_form.is_valid():                
-                updated_listing = update_form.save()
-                return redirect(updated_listing)
-            else:
-                return render(request, self.template_name, {
-                    "listing": listing,
-                    "form": update_form
-                })
-        raise PermissionDenied        
+    def get_object(self, queryset=None):
+        obj = get_object_or_404(Listing, pk=self.kwargs["id"])
+        if obj.author != self.request.user:
+            raise PermissionDenied
+        return obj
 
 
 class ListingCreate(LoginRequiredMixin, CreateView):  

@@ -28,28 +28,6 @@ class UserForm(forms.ModelForm):
                 "placeholder": "Paste the link for your avatar image"                
             })
         }
-
-
-class ListingCategoryForm(forms.ModelForm):
-    
-    def clean_slug(self):
-        slug = slugify(super(ListingCategoryForm, self).clean().get("name"))
-        print(slug)        
-        if ListingCategory.objects.filter(slug=slug).exists():
-            raise ValidationError("Such category already exists")
-        if slug == "create":
-            raise ValidationError("Slug may not be 'create'")
-        return slug
-    
-    class Meta:
-        model = ListingCategory
-        fields = ["name"]
-        widgets = {
-            "name": forms.TextInput(attrs={
-                "class": "form-control",
-                "placeholder": ""                
-            })
-        }
         
 
 class ListingForm(forms.ModelForm):
@@ -59,8 +37,7 @@ class ListingForm(forms.ModelForm):
         fields = [
             "title",
             "description",
-            "category",
-            "starting_bid",            
+            "category",            
             "image"
         ]
         widgets = {
