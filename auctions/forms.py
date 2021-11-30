@@ -38,7 +38,8 @@ class ListingForm(forms.ModelForm):
             "title",
             "description",
             "category",            
-            "image"
+            "image",
+            "starting_bid"
         ]
         widgets = {
             "title": forms.TextInput(attrs={
